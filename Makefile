@@ -1,10 +1,19 @@
-SOURCEDIR = $(PWD)
-VEDLIBDIR = $(PWD)/ext/velib_python
+SOURCEDIR = $(shell pwd)
+VEDLIBDIR = $(SOURCEDIR)/ext/velib_python
+
+# set install_cmd based on the platform
+ifeq ($(shell uname -s),Darwin)
+INSTALL_CMD = /opt/homebrew/opt/coreutils/libexec/gnubin/install
+endif
+ifeq ($(shell uname -s),Linux)
 INSTALL_CMD = install
+endif
+
 LIBDIR = $(bindir)/ext/velib_python
 
 FILES = \
 	$(SOURCEDIR)/dbus_systemcalc.py \
+	$(SOURCEDIR)/const.py \
 	$(SOURCEDIR)/sc_utils.py
 
 DELEGATES = \
@@ -76,7 +85,7 @@ clean: ;
 install: install_velib_python install_app install_delegates
 
 test:
-	python3 /usr/bin/nosetests -v -w tests
+	nosetests -v -w tests
 
 testinstall:
 	$(eval TMP := $(shell mktemp -d))

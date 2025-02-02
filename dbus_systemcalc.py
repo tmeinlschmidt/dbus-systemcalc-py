@@ -21,6 +21,8 @@ from logger import setup_logging
 import delegates
 from sc_utils import safeadd as _safeadd, safemax as _safemax
 
+from const import Const as _c
+
 softwareVersion = '2.208'
 
 class SystemCalc:
@@ -34,7 +36,7 @@ class SystemCalc:
 		# need them. So just add some dummy data. This can go away when DbusMonitor is more generic.
 		dummy = {'code': None, 'whenToLog': 'configChange', 'accessLevel': None}
 		dbus_tree = {
-			'com.victronenergy.solarcharger': {
+			_c.COM_VICTRONENERGY_SOLARCHARGER: {
 				'/Connected': dummy,
 				'/ProductName': dummy,
 				'/Mgmt/Connection': dummy,
@@ -42,7 +44,7 @@ class SystemCalc:
 				'/Dc/0/Current': dummy,
 				'/Load/I': dummy,
 				'/FirmwareVersion': dummy},
-			'com.victronenergy.battery': {
+			_c.COM_VICTRONENERGY_BATTERY: {
 				'/Connected': dummy,
 				'/ProductName': dummy,
 				'/Mgmt/Connection': dummy,
@@ -58,7 +60,7 @@ class SystemCalc:
 				'/ProductId': dummy,
 				'/CustomName': dummy,
 				'/Info/MaxChargeVoltage': dummy},
-			'com.victronenergy.vebus' : {
+			_c.COM_VICTRONENERGY_VEBUS : {
 				'/Ac/ActiveIn/ActiveInput': dummy,
 				'/Ac/ActiveIn/L1/P': dummy,
 				'/Ac/ActiveIn/L2/P': dummy,
@@ -82,13 +84,13 @@ class SystemCalc:
 				'/Dc/0/Current': dummy,
 				'/Dc/0/Power': dummy,
 				'/Soc': dummy},
-			'com.victronenergy.fuelcell': {
+			_c.COM_VICTRONENERGY_FUELCELL: {
 				'/Connected': dummy,
 				'/ProductName': dummy,
 				'/Mgmt/Connection': dummy,
 				'/Dc/0/Voltage': dummy,
 				'/Dc/0/Current': dummy},
-			'com.victronenergy.charger': {
+			_c.COM_VICTRONENERGY_CHARGER: {
 				'/Connected': dummy,
 				'/ProductName': dummy,
 				'/Mgmt/Connection': dummy,
@@ -98,7 +100,7 @@ class SystemCalc:
 				'/Dc/1/Current': dummy,
 				'/Dc/2/Voltage': dummy,
 				'/Dc/2/Current': dummy},
-			'com.victronenergy.grid' : {
+			_c.COM_VICTRONENERGY_GRID: {
 				'/Connected': dummy,
 				'/ProductName': dummy,
 				'/Mgmt/Connection': dummy,
@@ -110,7 +112,7 @@ class SystemCalc:
 				'/Ac/L1/Current': dummy,
 				'/Ac/L2/Current': dummy,
 				'/Ac/L3/Current': dummy},
-			'com.victronenergy.genset' : {
+			_c.COM_VICTRONENERGY_GENSET: {
 				'/Connected': dummy,
 				'/ProductName': dummy,
 				'/Mgmt/Connection': dummy,
@@ -123,16 +125,16 @@ class SystemCalc:
 				'/Ac/L2/Current': dummy,
 				'/Ac/L3/Current': dummy,
 				'/StarterVoltage': dummy},
-			'com.victronenergy.settings' : {
+			_c.COM_VICTRONENERGY_SETTINGS: {
 				'/Settings/SystemSetup/AcInput1' : dummy,
 				'/Settings/SystemSetup/AcInput2' : dummy,
 				'/Settings/CGwacs/RunWithoutGridMeter' : dummy,
 				'/Settings/System/TimeZone' : dummy},
-			'com.victronenergy.temperature': {
+			_c.COM_VICTRONENERGY_TEMPERATURE: {
 				'/Connected': dummy,
 				'/ProductName': dummy,
 				'/Mgmt/Connection': dummy},
-			'com.victronenergy.inverter': {
+			_c.COM_VICTRONENERGY_INVERTER: {
 				'/Connected': dummy,
 				'/ProductName': dummy,
 				'/Mgmt/Connection': dummy,
@@ -153,7 +155,7 @@ class SystemCalc:
 				'/Ac/Out/L3/I': dummy,
 				'/Yield/Power': dummy,
 				'/Soc': dummy},
-			'com.victronenergy.multi': {
+			_c.COM_VICTRONENERGY_MULTI: {
 				'/Connected': dummy,
 				'/ProductName': dummy,
 				'/Mgmt/Connection': dummy,
@@ -186,12 +188,12 @@ class SystemCalc:
 				'/Ac/Out/L3/I': dummy,
 				'/Yield/Power': dummy,
 				'/Soc': dummy},
-			'com.victronenergy.dcsystem': {
+			_c.COM_VICTRONENERGY_DCSYSTEM: {
 				'/Dc/0/Voltage': dummy,
 				'/Dc/0/Power': dummy,
 				'/Dc/0/Current': dummy,
 			},
-			'com.victronenergy.alternator': {
+			_c.COM_VICTRONENERGY_ALTERNATOR: {
 				'/Dc/0/Power': dummy
 			}
 		}
@@ -458,32 +460,32 @@ class SystemCalc:
 		# is more than one battery service, just use a random one. If no battery service is
 		# available, check if there are not Solar chargers and no normal chargers. If they are not
 		# there, assume this is a hub-2, hub-3 or hub-4 system and use VE.Bus SOC.
-		batteries = self._get_connected_service_list('com.victronenergy.battery')
+		batteries = self._get_connected_service_list(_c.COM_VICTRONENERGY_BATTERY)
 
 		# Pick the battery service that has the lowest DeviceInstance, giving
 		# preference to those with a BMS. Instances of 'lynxparallel' are preferred over regular BMSes.
 		if len(batteries) > 0:
 			batteries = [
 				(not self._dbusmonitor.seen(s, '/Info/MaxChargeVoltage'),
-	 			 not s.startswith('com.victronenergy.battery.lynxparallel'), i, s)
+				not s.startswith(_c.COM_VICTRONENERGY_BATTERY_LYNXPARALLEL), i, s)
 				for s, i in batteries.items()]
 			return sorted(batteries, key=lambda x: x[:3])[0][3]
 
 		# No battery services, and there is a charger in the system. Abandon
 		# hope.
-		if self._get_first_connected_service('com.victronenergy.charger') is not None:
+		if self._get_first_connected_service(_c.COM_VICTRONENERGY_CHARGER) is not None:
 			return None
 
 		# Also no Multi, then give up.
-		vebus_service = self._get_service_having_lowest_instance('com.victronenergy.vebus')
+		vebus_service = self._get_service_having_lowest_instance(_c.COM_VICTRONENERGY_VEBUS)
 		if vebus_service is None:
 			# No VE.Bus, but maybe there is an inverter with built-in SOC
 			# tracking, eg RS Smart or Multi RS.
-			inverter = self._get_service_having_lowest_instance('com.victronenergy.multi')
+			inverter = self._get_service_having_lowest_instance(_c.COM_VICTRONENERGY_MULTI)
 			if inverter and self._dbusmonitor.get_value(inverter[0], '/Soc') is not None:
 				return inverter[0]
 
-			inverter = self._get_service_having_lowest_instance('com.victronenergy.inverter')
+			inverter = self._get_service_having_lowest_instance(_c.COM_VICTRONENERGY_INVERTER)
 			if inverter and self._dbusmonitor.get_value(inverter[0], '/Soc') is not None:
 				return inverter[0]
 
@@ -493,13 +495,13 @@ class SystemCalc:
 		# solarchargers, and there are no DC loads. Then use it.
 		if self._dbusmonitor.get_value(
 				vebus_service[0], '/ExtraBatteryCurrent') is not None \
-				and self._get_first_connected_service('com.victronenergy.dcsystem') is None \
+				and self._get_first_connected_service(_c.COM_VICTRONENERGY_DCSYSTEM) is None \
 				and self._settings['hasdcsystem'] == 0:
 			return vebus_service[0]
 
 		# Multi does not support tracking solarcharger current, and we have
 		# solar chargers. Then we cannot use it.
-		if self._get_first_connected_service('com.victronenergy.solarcharger') is not None:
+		if self._get_first_connected_service(_c.COM_VICTRONENERGY_SOLARCHARGER) is not None:
 			return None
 
 		# Only a Multi, no other chargers. Then we can use it.
@@ -523,19 +525,21 @@ class SystemCalc:
 
 		# Set the user timezone
 		if 'TZ' not in os.environ:
-			tz = self._dbusmonitor.get_value('com.victronenergy.settings', '/Settings/System/TimeZone')
+			tz = self._dbusmonitor.get_value(_c.COM_VICTRONENERGY_SETTINGS, '/Settings/System/TimeZone')
 			if tz is not None:
 				os.environ['TZ'] = tz
 				time.tzset()
 
 		# Determine values used in logic below
-		vebusses = self._dbusmonitor.get_service_list('com.victronenergy.vebus')
+		vebusses = self._dbusmonitor.get_service_list(_c.COM_VICTRONENERGY_VEBUS)
 		vebuspower = 0
 		for vebus in vebusses:
+			# SPEED_IMPROVEMENT: vebus power calculated only when V and I are set
 			v = self._dbusmonitor.get_value(vebus, '/Dc/0/Voltage')
-			i = self._dbusmonitor.get_value(vebus, '/Dc/0/Current')
-			if v is not None and i is not None:
-				vebuspower += v * i
+			if v is not None:
+				i = self._dbusmonitor.get_value(vebus, '/Dc/0/Current')
+				if i is not None:
+					vebuspower += v * i
 
 		# ==== PVINVERTERS ====
 		# Work is done in pv-inverter delegate. Ideally all of this should
@@ -550,7 +554,7 @@ class SystemCalc:
 		self._compute_number_of_phases('/Ac/PvOnGenset', newvalues)
 
 		# ==== SOLARCHARGERS ====
-		solarchargers = self._dbusmonitor.get_service_list('com.victronenergy.solarcharger')
+		solarchargers = self._dbusmonitor.get_service_list(_c.COM_VICTRONENERGY_SOLARCHARGER)
 		solarcharger_batteryvoltage = None
 		solarcharger_batteryvoltage_service = None
 		solarchargers_charge_power = 0
@@ -591,7 +595,7 @@ class SystemCalc:
 				newvalues['/Dc/Pv/Current'] += _safeadd(i, l)
 
 		# ==== FUELCELLS ====
-		fuelcells = self._dbusmonitor.get_service_list('com.victronenergy.fuelcell')
+		fuelcells = self._dbusmonitor.get_service_list(_c.COM_VICTRONENERGY_FUELCELL)
 		fuelcell_batteryvoltage = None
 		fuelcell_batteryvoltage_service = None
 		for fuelcell in fuelcells:
@@ -613,7 +617,7 @@ class SystemCalc:
 				newvalues['/Dc/FuelCell/Power'] += v * i
 
 		# ==== ALTERNATOR ====
-		alternators = self._dbusmonitor.get_service_list('com.victronenergy.alternator')
+		alternators = self._dbusmonitor.get_service_list(_c.COM_VICTRONENERGY_ALTERNATOR)
 		for alternator in alternators:
 			# Assume the battery connected to output 0 is the main battery
 			p = self._dbusmonitor.get_value(alternator, '/Dc/0/Power')
@@ -626,7 +630,7 @@ class SystemCalc:
 				newvalues['/Dc/Alternator/Power'] += p
 
 		# ==== CHARGERS ====
-		chargers = self._dbusmonitor.get_service_list('com.victronenergy.charger')
+		chargers = self._dbusmonitor.get_service_list(_c.COM_VICTRONENERGY_CHARGER)
 		charger_batteryvoltage = None
 		charger_batteryvoltage_service = None
 		for charger in chargers:
@@ -648,8 +652,8 @@ class SystemCalc:
 				newvalues['/Dc/Charger/Power'] += v * i
 
 		# ==== Other Inverters and Inverter/Chargers ====
-		_other_inverters = sorted((di, s) for s, di in self._dbusmonitor.get_service_list('com.victronenergy.multi').items()) + \
-			sorted((di, s) for s, di in self._dbusmonitor.get_service_list('com.victronenergy.inverter').items())
+		_other_inverters = sorted((di, s) for s, di in self._dbusmonitor.get_service_list(_c.COM_VICTRONENERGY_MULTI).items()) + \
+			sorted((di, s) for s, di in self._dbusmonitor.get_service_list(_c.COM_VICTRONENERGY_INVERTER).items())
 		non_vebus_inverters = [x[1] for x in _other_inverters]
 		non_vebus_inverter = None
 		if non_vebus_inverters:
@@ -661,7 +665,7 @@ class SystemCalc:
 					newvalues['/Dc/Pv/Power'] = newvalues.get('/Dc/Pv/Power', 0) + pv_yield
 
 		# Used lower down, possibly needed for battery values as well
-		dcsystems = self._dbusmonitor.get_service_list('com.victronenergy.dcsystem')
+		dcsystems = self._dbusmonitor.get_service_list(_c.COM_VICTRONENERGY_DCSYSTEM)
 
 		# ==== BATTERY ====
 		if self._batteryservice is not None:
@@ -716,14 +720,16 @@ class SystemCalc:
 			# try a solar charger, a charger, a vedirect inverter or a dcsource
 			# as fallbacks.
 			batteryservicetype = None
-			vebusses = self._dbusmonitor.get_service_list('com.victronenergy.vebus')
+			vebusses = self._dbusmonitor.get_service_list(_c.COM_VICTRONENERGY_VEBUS)
 			for vebus in vebusses:
 				v = self._dbusmonitor.get_value(vebus, '/Dc/0/Voltage')
-				s = self._dbusmonitor.get_value(vebus, '/State')
-				if v is not None and s not in (0, None):
-					newvalues['/Dc/Battery/Voltage'] = v
-					newvalues['/Dc/Battery/VoltageService'] = vebus
-					break # Skip the else below
+				# SPEED_IMPROVEMENT: Only get the state if the voltage is not None
+				if v is not None:
+					s = self._dbusmonitor.get_value(vebus, '/State')
+					if s not in (0, None):
+						newvalues['/Dc/Battery/Voltage'] = v
+						newvalues['/Dc/Battery/VoltageService'] = vebus
+						break # Skip the else below
 			else:
 				# No suitable vebus voltage, try other devices
 				if non_vebus_inverter is not None and (v := self._dbusmonitor.get_value(non_vebus_inverter, '/Dc/0/Voltage')) is not None:
@@ -829,7 +835,7 @@ class SystemCalc:
 			if non_vebus_inverter is not None:
 				if (active_input := self._dbusmonitor.get_value(non_vebus_inverter, '/Ac/ActiveIn/ActiveInput')) is not None and \
 						active_input in (0, 1) and \
-						(active_type := self._dbusmonitor.get_value(non_vebus_inverter, '/Ac/In/{}/Type'.format(active_input + 1))) is not None:
+						(active_type := self._dbusmonitor.get_value(non_vebus_inverter, f'/Ac/In/{active_input + 1}/Type')) is not None:
 					ac_in_source = active_type
 				else:
 					ac_in_source = 240
@@ -839,8 +845,10 @@ class SystemCalc:
 				# Not connected
 				ac_in_source = 240
 			elif active_input is not None:
-				settings_path = '/Settings/SystemSetup/AcInput%s' % (active_input + 1)
-				ac_in_source = self._dbusmonitor.get_value('com.victronenergy.settings', settings_path)
+				# SPEED_IMPROVEMENT
+				# format() faster than %s
+				settings_path = f'/Settings/SystemSetup/AcInput{active_input + 1}'
+				ac_in_source = self._dbusmonitor.get_value(_c.COM_VICTRONENERGY_SETTINGS, settings_path)
 		newvalues['/Ac/ActiveIn/Source'] = ac_in_source
 
 		# ===== GRID METERS & CONSUMPTION ====
@@ -871,11 +879,11 @@ class SystemCalc:
 			for phase in consumption:
 				p = None
 				mc = None
-				pvpower = newvalues.get('/Ac/PvOn%s/%s/Power' % (device_type, phase))
-				pvcurrent = newvalues.get('/Ac/PvOn%s/%s/Current' % (device_type, phase))
+				pvpower = newvalues.get(f'/Ac/PvOn{device_type}/{phase}/Power')
+				pvcurrent = newvalues.get(f'/Ac/PvOn{device_type}/{phase}/Current')
 				if em is not None:
-					p = self._dbusmonitor.get_value(em.service, '/Ac/%s/Power' % phase)
-					mc = self._dbusmonitor.get_value(em.service, '/Ac/%s/Current' % phase)
+					p = self._dbusmonitor.get_value(em.service, f'/Ac/{phase}/Power')
+					mc = self._dbusmonitor.get_value(em.service, f'/Ac/{phase}/Current')
 					# Compute consumption between energy meter and multi (meter power - multi AC in) and
 					# add an optional PV inverter on input to the mix.
 					c = None
@@ -883,15 +891,15 @@ class SystemCalc:
 					if uses_active_input:
 						if multi_path is not None:
 							try:
-								c = _safeadd(c, -self._dbusmonitor.get_value(multi_path, '/Ac/ActiveIn/%s/P' % phase))
-								cc = _safeadd(cc, -self._dbusmonitor.get_value(multi_path, '/Ac/ActiveIn/%s/I' % phase))
+								c = _safeadd(c, -self._dbusmonitor.get_value(multi_path, f'/Ac/ActiveIn/{phase}/P'))
+								cc = _safeadd(cc, -self._dbusmonitor.get_value(multi_path, f'/Ac/ActiveIn/{phase}/I'))
 							except TypeError:
 								pass
 						elif non_vebus_inverter is not None and active_input in (0, 1):
 							for i in non_vebus_inverters:
 								try:
-									c = _safeadd(c, -self._dbusmonitor.get_value(i, '/Ac/In/%d/%s/P' % (active_input+1, phase)))
-									cc = _safeadd(cc, -self._dbusmonitor.get_value(i, '/Ac/In/%d/%s/I' % (active_input+1, phase)))
+									c = _safeadd(c, -self._dbusmonitor.get_value(i, f'/Ac/In/{active_input +1 }/{phase}/P'))
+									cc = _safeadd(cc, -self._dbusmonitor.get_value(i, f'/Ac/In/{active_input + 1}/{phase}/I'))
 								except TypeError:
 									pass
 
@@ -905,16 +913,16 @@ class SystemCalc:
 				else:
 					if uses_active_input:
 						if multi_path is not None  and (
-								p := self._dbusmonitor.get_value(multi_path, '/Ac/ActiveIn/%s/P' % phase)) is not None:
+								p := self._dbusmonitor.get_value(multi_path, f'/Ac/ActiveIn/{phase}/P')) is not None:
 							consumption[phase] = _safeadd(0, consumption[phase])
 							currentconsumption[phase] = _safeadd(0, currentconsumption[phase])
-							mc = self._dbusmonitor.get_value(multi_path, '/Ac/ActiveIn/%s/I' % phase)
+							mc = self._dbusmonitor.get_value(multi_path, f'/Ac/ActiveIn/{phase}/I')
 						elif non_vebus_inverter is not None and active_input in (0, 1):
 							for i in non_vebus_inverters:
 								p = _safeadd(p,
-									self._dbusmonitor.get_value(i, '/Ac/In/%d/%s/P' % (active_input + 1, phase)))
+									self._dbusmonitor.get_value(i, f'/Ac/In/{active_input + 1}/{phase}/P'))
 								mc = _safeadd(mc,
-									self._dbusmonitor.get_value(i, '/Ac/In/%d/%s/I' % (active_input + 1, phase)))
+									self._dbusmonitor.get_value(i, f'/Ac/In/{active_input + 1}/{phase}/I'))
 							if p is not None:
 								consumption[phase] = _safeadd(0, consumption[phase])
 								currentconsumption[phase] = _safeadd(0, currentconsumption[phase])
@@ -927,13 +935,13 @@ class SystemCalc:
 					except TypeError:
 						pass
 
-				newvalues['/Ac/%s/%s/Power' % (device_type, phase)] = p
-				newvalues['/Ac/%s/%s/Current' % (device_type, phase)] = mc
+				newvalues[f'/Ac/{device_type}/{phase}/Power'] = p
+				newvalues[f'/Ac/{device_type}/{phase}/Current'] = mc
 				if ac_in_guess in _types:
-					newvalues['/Ac/ActiveIn/%s/Power' % (phase,)] = p
-					newvalues['/Ac/ActiveIn/%s/Current' % (phase,)] = mc
+					newvalues[f'/Ac/ActiveIn/{phase}/Power'] = p
+					newvalues[f'/Ac/ActiveIn/{phase}/Current'] = mc
 
-			self._compute_number_of_phases('/Ac/%s' % device_type, newvalues)
+			self._compute_number_of_phases(f'/Ac/{device_type}', newvalues)
 			self._compute_number_of_phases('/Ac/ActiveIn', newvalues)
 
 			product_id = None
@@ -946,8 +954,8 @@ class SystemCalc:
 					product_id = self._dbusmonitor.get_value(multi_path, '/ProductId')
 				elif non_vebus_inverter is not None:
 					product_id = self._dbusmonitor.get_value(non_vebus_inverter, '/ProductId')
-			newvalues['/Ac/%s/ProductId' % device_type] = product_id
-			newvalues['/Ac/%s/DeviceType' % device_type] = device_type_id
+			newvalues[f'/Ac/{device_type}/ProductId'] = product_id
+			newvalues[f'/Ac/{device_type}/DeviceType'] = device_type_id
 
 		# If a system has no loads/generation on the input side, we can
 		# assume ConsumptionOnInput to be invalid. This also implies that
@@ -961,42 +969,42 @@ class SystemCalc:
 			not has_ac_in_system or \
 			self._settings['useacout'] == 1 or \
 			(multi_path is not None and self._dbusmonitor.get_value(multi_path, '/Hub4/AssistantId') not in (4, 5)) or \
-			self._dbusmonitor.get_value('com.victronenergy.settings', '/Settings/CGwacs/RunWithoutGridMeter') == 1
+			self._dbusmonitor.get_value(_c.COM_VICTRONENERGY_SETTINGS, '/Settings/CGwacs/RunWithoutGridMeter') == 1
 		for phase in consumption:
 			c = None
 			a = None
 			if use_ac_out:
-				c = newvalues.get('/Ac/PvOnOutput/%s/Power' % phase)
-				a = newvalues.get('/Ac/PvOnOutput/%s/Current' % phase)
+				c = newvalues.get(f'/Ac/PvOnOutput/{phase}/Power')
+				a = newvalues.get(f'/Ac/PvOnOutput/{phase}/Current')
 				if multi_path is None:
 					for inv in non_vebus_inverters:
-						ac_out = self._dbusmonitor.get_value(inv, '/Ac/Out/%s/P' % phase)
-						i = self._dbusmonitor.get_value(inv, '/Ac/Out/%s/I' % phase)
+						ac_out = self._dbusmonitor.get_value(inv, f'/Ac/Out/{phase}/P')
+						i = self._dbusmonitor.get_value(inv, f'/Ac/Out/{phase}/I')
 
 						# Some models don't show power, try apparent power,
 						# else calculate it
 						if ac_out is None:
-							ac_out = self._dbusmonitor.get_value(inv, '/Ac/Out/%s/S' % phase)
+							ac_out = self._dbusmonitor.get_value(inv, f'/Ac/Out/{phase}/S')
 							if ac_out is None:
-								u = self._dbusmonitor.get_value(inv, '/Ac/Out/%s/V' % phase)
+								u = self._dbusmonitor.get_value(inv, f'/Ac/Out/{phase}/V')
 								if None not in (i, u):
 									ac_out = i * u
 						c = _safeadd(c, ac_out)
 						a = _safeadd(a, i)
 				else:
-					ac_out = self._dbusmonitor.get_value(multi_path, '/Ac/Out/%s/P' % phase)
+					ac_out = self._dbusmonitor.get_value(multi_path, f'/Ac/Out/{phase}/P')
 					c = _safeadd(c, ac_out)
-					i_out = self._dbusmonitor.get_value(multi_path, '/Ac/Out/%s/I' % phase)
+					i_out = self._dbusmonitor.get_value(multi_path, f'/Ac/Out/{phase}/I')
 					a = _safeadd(a, i_out)
 				c = _safemax(0, c)
 				a = _safemax(0, a)
-			newvalues['/Ac/ConsumptionOnOutput/%s/Power' % phase] = c
-			newvalues['/Ac/ConsumptionOnOutput/%s/Current' % phase] = a
-			newvalues['/Ac/Consumption/%s/Power' % phase] = _safeadd(consumption[phase], c)
-			newvalues['/Ac/Consumption/%s/Current' % phase] = _safeadd(currentconsumption[phase], a)
+			newvalues[f'/Ac/ConsumptionOnOutput/{phase}/Power'] = c
+			newvalues[f'/Ac/ConsumptionOnOutput/{phase}/Current'] = a
+			newvalues[f'/Ac/Consumption/{phase}/Power'] = _safeadd(consumption[phase], c)
+			newvalues[f'/Ac/Consumption/{phase}/Current'] = _safeadd(currentconsumption[phase], a)
 			if has_ac_in_system:
-				newvalues['/Ac/ConsumptionOnInput/%s/Power' % phase] = consumption[phase]
-				newvalues['/Ac/ConsumptionOnInput/%s/Current' % phase] = currentconsumption[phase]
+				newvalues[f'/Ac/ConsumptionOnInput/{phase}/Power'] = consumption[phase]
+				newvalues[f'/Ac/ConsumptionOnInput/{phase}/Current'] = currentconsumption[phase]
 
 		self._compute_number_of_phases('/Ac/Consumption', newvalues)
 		self._compute_number_of_phases('/Ac/ConsumptionOnOutput', newvalues)
@@ -1036,18 +1044,18 @@ class SystemCalc:
 			# Update correct '/Ac/In/..' based on the current active input.
 			# When no inputs are active, paths '/Ac/In/[0/1]/Current/[Min/Max] will all be invalidated.
 			if(activeInNr != None):
-				self._settings['acin%smin' % activeInNr] = min(0,
-																	self._settings['acin%smin' % activeInNr] or float("inf"),
+				self._settings[f'acin{activeInNr}min'] = min(0,
+																	self._settings[f'acin{activeInNr}min'] or float("inf"),
 																	newvalues.get('/Ac/ActiveIn/L1/Current') or float("inf"),
 																	newvalues.get('/Ac/ActiveIn/L2/Current') or float("inf"),
 																	newvalues.get('/Ac/ActiveIn/L3/Current') or float("inf"))
 
-				self._settings['acin%smax' % activeInNr] = max(self._settings['acin%smax' % activeInNr] or 0,
+				self._settings[f'acin{activeInNr}max'] = max(self._settings[f'acin{activeInNr}max'] or 0,
 																	newvalues.get('/Ac/ActiveIn/L1/Current') or 0,
 																	newvalues.get('/Ac/ActiveIn/L2/Current') or 0,
 																	newvalues.get('/Ac/ActiveIn/L3/Current') or 0)
 
-			self._settings['%sconnmax' % activeIn] = max(self._settings['%sconnmax' % activeIn],
+			self._settings[f'{activeIn}connmax'] = max(self._settings[f'{activeIn}connmax'],
 																newvalues.get('/Ac/Consumption/L1/Current') or 0,
 																newvalues.get('/Ac/Consumption/L2/Current') or 0,
 																newvalues.get('/Ac/Consumption/L3/Current') or 0)
@@ -1088,12 +1096,12 @@ class SystemCalc:
 		# servicename, ie 'com.victronenergy.vebus.ttyO1' is not used, since the last part of that is not
 		# fixed. dbus-serviceclass name and the device instance are already fixed, so best to use those.
 
-		services = self._get_connected_service_list('com.victronenergy.vebus')
-		services.update(self._get_connected_service_list('com.victronenergy.battery'))
+		services = self._get_connected_service_list(_c.COM_VICTRONENERGY_VEBUS)
+		services.update(self._get_connected_service_list(_c.COM_VICTRONENERGY_BATTERY))
 		services.update({k: v for k, v in self._get_connected_service_list(
-			'com.victronenergy.multi').items() if self._dbusmonitor.get_value(k, '/Soc') is not None})
+			_c.COM_VICTRONENERGY_MULTI).items() if self._dbusmonitor.get_value(k, '/Soc') is not None})
 		services.update({k: v for k, v in self._get_connected_service_list(
-			'com.victronenergy.inverter').items() if self._dbusmonitor.get_value(k, '/Soc') is not None})
+			_c.COM_VICTRONENERGY_INVERTER).items() if self._dbusmonitor.get_value(k, '/Soc') is not None})
 
 		ul = {self.BATSERVICE_DEFAULT: 'Automatic', self.BATSERVICE_NOBATTERY: 'No battery monitor'}
 		for servicename, instance in services.items():
@@ -1137,8 +1145,13 @@ class SystemCalc:
 
 		# Workaround because com.victronenergy.vebus is available even when there is no vebus product
 		# connected.
+		# SPEED_IMPROVEMENT:
+		# ❯ python3 -m timeit -s 'text="com.victronenergy.vebus"' "text.split('.')[0:3] == ['com', 'victronenergy', 'vebus']" number=100000
+		# 2000000 loops, best of 5: 204 nsec per loop
+		# ❯ python3 -m timeit -s "text=('com.victronenergy.vebus'+'|').startswith('com.victronenergy.vebus|')" number=100000
+		# 50000000 loops, best of 5: 5.67 nsec per loop
 		if (dbusPath in ['/Connected', '/ProductName', '/Mgmt/Connection'] or
-			(dbusPath == '/State' and dbusServiceName.split('.')[0:3] == ['com', 'victronenergy', 'vebus'])):
+			(dbusPath == '/State' and (dbusServiceName+'.').startswith('com.victronenergy.vebus.'))):
 			self._handleservicechange()
 
 		# Track the timezone changes
@@ -1216,7 +1229,7 @@ class DbusSystemCalc(SystemCalc):
 	def _create_dbus_service(self):
 		venusversion, venusbuildtime = self._get_venus_versioninfo()
 
-		dbusservice = VeDbusService('com.victronenergy.system', register=False)
+		dbusservice = VeDbusService(_c.COM_VICTRONENERGY_SYSTEM, register=False)
 		dbusservice.add_mandatory_paths(
 			processname=__file__,
 			processversion=softwareVersion,
